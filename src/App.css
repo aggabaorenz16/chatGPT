@@ -1,0 +1,78 @@
+.App {
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+
+.chat-window {
+  width: 500px;
+  margin: 50px auto;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background-color: #6f6c6c37;
+  padding: 10px;
+}
+
+.messages {
+  max-height: 300px;
+  overflow-y: scroll;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.message {
+  margin: 5px 0;
+  padding: 8px;
+  border-radius: 5px;
+}
+
+.user {
+  background-color: #ffffff;
+  text-align: left;
+}
+
+.bot {
+  background-color: #cfc7c7;
+  text-align: left;
+  color: black;
+}
+
+.chat-input {
+  display: flex;
+  justify-content: space-between;
+}
+
+.chat-input input {
+  width: 80%;
+  padding: 5px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.chat-input button {
+  width: 20%;
+  padding: 5px;
+  margin: 1rem;
+  border-radius: 5px;
+  background-color: #4CAF50;
+  color: white;
+  font-size: 20px;
+  border: none;
+  cursor: pointer;
+}
+
+.chat-input button:hover {
+  background-color: #45a049;
+}
+.delete-button {
+  margin-top: 10px;
+  padding: 8px 16px;
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.delete-button:hover {
+  background-color: #ff1a1a;
+}
