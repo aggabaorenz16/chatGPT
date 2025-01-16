@@ -1,110 +1,160 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import './App.css';
+import React, { useState, useEffect } from "react";
+import "./App.css";
+// Backend Integration: Google Generative AI SDK
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-// Importing the Google Generative AI SDK (Ensure it's installed)
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+// Use environment variable or hardcoded API key for access
+const apiKey = "AIzaSyD4u7vPpj8L9h2SjEr48-L6uXIa66VLqW0";
+const genAI = new GoogleGenerativeAI(apiKey);
 
+const model = genAI.getGenerativeModel({
+  model: "gemini-2.0-flash-exp",
+});
+
+// Generation Configuration
+const generationConfig = {
+  temperature: 0.65,
+  topP: 0.95,
+  topK: 40,
+  maxOutputTokens: 8192,
+  responseMimeType: "text/plain",
+};
+
+// Function to get AI response
+async function getAIResponse(input) {
+  try {
+    const chatSession = model.startChat({
+      generationConfig,
+      history: [
+        {
+          role: "user",
+          parts: [{ text: "Who's Renz Abellanosa Aggabao?" }],
+        },
+        {
+          role: "model",
+          parts: [
+            {
+              text: "This React application, integrating Google Generative AI, was created by Renz Abellanosa Aggabao, a second-year student at Quezon City University, pursuing a Bachelor of Science in Information Technology.",
+            },
+          ],
+        },
+        {
+          role: "user",
+          parts: [{ text: input }],
+        },
+      ],
+    });
+
+    const result = await chatSession.sendMessage(input);
+    return result.response.text();
+  } catch (error) {
+    console.error("Error fetching AI response:", error);
+    throw new Error(`Error: ${error.message}`);
+  }
+}
+
+// React Frontend Application
 function App() {
   const [messages, setMessages] = useState(() => {
-    // Load messages from localStorage when the component mounts
-    const savedMessages = localStorage.getItem('chatMessages');
+    const savedMessages = localStorage.getItem("chatMessages");
     return savedMessages ? JSON.parse(savedMessages) : [];
   });
-  const [input, setInput] = useState('');
+
+  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showAboutModal, setShowAboutModal] = useState(false);
 
+  // Save messages to localStorage when updated
   useEffect(() => {
-    // Save messages to localStorage whenever they change
-    localStorage.setItem('chatMessages', JSON.stringify(messages));
-  }, []);
+    localStorage.setItem("chatMessages", JSON.stringify(messages));
+  }, [messages]);
 
+  // Handle form submission to send user input
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!input.trim()) return;
 
-    if (input.trim()) {
-      setMessages([...messages, { text: input, user: true }]);
+    setMessages((prev) => [...prev, { text: input, user: true }]);
+    setLoading(true);
 
-      // Get AI response using the Google Generative API
-      setLoading(true); // Set loading state while waiting for the response
-      const response = await getAIResponse(input);
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { text: response, user: false },
-      ]);
-      setInput('');
-      setLoading(false); // Reset loading state once the response is received
-    }
-  };
-
-  // Function to get AI response using Google Generative API (via SDK)
-  const getAIResponse = async (input) => {
     try {
-      const apiKey = "AIzaSyD4u7vPpj8L9h2SjEr48-L6uXIa66VLqW0"; // Use environment variable for API key
-      const genAI = new GoogleGenerativeAI(apiKey);
-
-      // Define the model configuration
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
-
-      // Set up the generation configuration
-      const generationConfig = {
-        temperature: 0.65,
-        topP: 0.95,
-        topK: 40,
-        maxOutputTokens: 8192,
-        responseMimeType: "text/plain",
-      };
-
-      // Start the chat session
-      const chatSession = model.startChat({
-        generationConfig,
-        history: [
-          {
-            role: "user",
-            parts: [{ text: input }],
-          },
-        ],
-      });
-
-      // Send the message to the model and get the response
-      const result = await chatSession.sendMessage(input);
-      return result.response.text();
+      const response = await getAIResponse(input);
+      setMessages((prev) => [...prev, { text: response, user: false }]);
     } catch (error) {
-      console.error('Error fetching AI response:', error);
-      return `Error: ${error.message}`; // Return error message if generation fails
+      setMessages((prev) => [
+        ...prev,
+        { text: `Error: ${error.message}`, user: false },
+      ]);
+    } finally {
+      setInput("");
+      setLoading(false);
     }
   };
 
+  // Clear chat history
   const handleDeleteMessages = () => {
-    setMessages([]); // Clear messages state
-    localStorage.removeItem('chatMessages'); // Clear messages from localStorage
+    setMessages([]);
+    localStorage.removeItem("chatMessages");
   };
+
+  // Handle About Modal
+  const toggleAboutModal = () => setShowAboutModal(!showAboutModal);
 
   return (
     <div className="App">
       <div className="chat-window">
+        {/* Message Display */}
         <div className="messages">
           {messages.map((message, index) => (
             <div
               key={index}
-              className={message.user ? 'message user' : 'message bot'}
+              className={message.user ? "message user" : "message bot"}
             >
               {message.text}
             </div>
           ))}
         </div>
+
+        {/* Input Form */}
         <form onSubmit={handleSubmit} className="chat-input">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type a message..."
+            disabled={loading}
           />
-          <button type="submit" disabled={loading}>Send</button>
+          <button type="submit" disabled={loading}>
+            Send
+          </button>
         </form>
-        <button onClick={handleDeleteMessages} className="delete-button">
-          Delete Messages
+
+        {/* Conditionally render the "Delete Messages" button */}
+        {messages.length > 0 && (
+          <button onClick={handleDeleteMessages} className="delete-button">
+            Delete Messages
+          </button>
+        )}
+
+        {/* About Icon Button */}
+        <button onClick={toggleAboutModal} className="about-button">
+          <i className="material-icons">info</i> {/* Material Icon for "About" */}
         </button>
+
+        {/* About Modal */}
+        {showAboutModal && (
+          <div className="modal">
+            <div className="modal-content">
+              <span className="close" onClick={toggleAboutModal}>
+                &times;
+              </span>
+              <h2>About</h2>
+              <p>
+                This React application integrates Google Generative AI to provide answers to users' questions. It was created by Renz Abellanosa Aggabao, a second-year student at Quezon City University, pursuing a Bachelor of Science in Information Technology.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
